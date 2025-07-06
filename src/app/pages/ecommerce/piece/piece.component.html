@@ -1,0 +1,203 @@
+<div class="row mb-3">
+    <!-- Filtres -->
+    <div class="col-md-3">
+        <label for="groupeFilter" class="form-label">Groupe</label>
+        <select id="groupeFilter" class="form-select" [(ngModel)]="selectedGroupe" (change)="applyFilters()">
+            <option [ngValue]="null">Tous les groupes</option>
+            <option *ngFor="let groupe of groupes" [ngValue]="groupe">{{ groupe.nom }}</option>
+        </select>
+    </div>
+   
+    
+    <!-- Recherche -->
+    <div class="col-md-4">
+        <label for="search" class="form-label">Recherche</label>
+        <input id="search" type="text" class="form-control" placeholder="Rechercher..." 
+               [(ngModel)]="searchText" (input)="applyFilters()">
+    </div>
+    
+    <!-- Bouton Réinitialiser -->
+    <div class="col-md-2 d-flex align-items-end">
+        <button class="btn btn-secondary w-100" (click)="resetFilters()">Réinitialiser</button>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <button class="btn btn-primary" (click)="showModal?.show()">
+            <i class="fas fa-plus"></i> Ajouter Pièce
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-centered mb-0">
+                        <thead>
+                            <tr>
+                                <th (click)="sort('piece.nom')" class="sortable">
+                                    Nom Pièce 
+                                    <span *ngIf="sortField === 'piece.nom'">
+                                        {{sortDirection === 'asc' ? '↑' : '↓'}}
+                                    </span>
+                                </th>
+                                <th (click)="sort('piece.reference')" class="sortable">
+                                    Référence
+                                    <span *ngIf="sortField === 'piece.reference'">
+                                        {{sortDirection === 'asc' ? '↑' : '↓'}}
+                                    </span>
+                                </th>
+                                <th (click)="sort('piece.sousGroupe.groupe.nom')" class="sortable">
+                                    Groupe
+                                    <span *ngIf="sortField === 'piece.sousGroupe.groupe.nom'">
+                                        {{sortDirection === 'asc' ? '↑' : '↓'}}
+                                    </span>
+                                </th>
+                                <th>Sous-groupe</th>
+                                <th (click)="sort('magasin.nom')" class="sortable">
+                                    Magasin
+                                    <span *ngIf="sortField === 'magasin.nom'">
+                                        {{sortDirection === 'asc' ? '↑' : '↓'}}
+                                    </span>
+                                </th>
+                                <th>Emplacement</th>
+                                <th (click)="sort('quantite')" class="sortable">
+                                    Quantité
+                                    <span *ngIf="sortField === 'quantite'">
+                                        {{sortDirection === 'asc' ? '↑' : '↓'}}
+                                    </span>
+                                </th>
+                                <th>Seuil Min</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let mp of magasinPieces">
+                                <td>{{ mp.piece?.nom }}</td>
+                                <td>{{ mp.piece?.reference }}</td>
+                                <td>{{ mp.piece?.sousGroupe?.groupe?.nom }}</td>
+                                <td>{{ mp.piece?.sousGroupe?.nom }}</td>
+                                <td>{{ mp.magasin?.nom }} ({{ mp.magasin?.localisation }})</td>
+                                <td>{{ mp.emplacement }}</td>
+                                <td>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" [(ngModel)]="mp.quantite">
+                                        <button class="btn btn-outline-primary" (click)="updateQuantite(mp)" title="Mettre à jour la quantité">
+                                            <i class="bi bi-gear"></i>
+                                        </button>
+                                      </div>
+                                </td>
+                                <td>{{ mp.piece?.seuilMin }}</td>
+                                <td>
+                                    <span *ngIf="mp.quantite < mp.piece?.seuilMin" class="badge bg-danger">Alerte Stock</span>
+                                    <span *ngIf="mp.quantite >= mp.piece?.seuilMin" class="badge bg-success">OK</span>
+                                </td>
+                            </tr>
+                            <tr *ngIf="magasinPieces.length === 0">
+                                <td colspan="9" class="text-center">Aucun résultat trouvé</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-2">
+    <div class="col-sm">
+        <div class="text-muted text-center text-sm-start">
+            Affichage de <span class="fw-semibold">{{magasinPieces.length}}</span> sur <span class="fw-semibold">{{allMagasinPieces.length}}</span> résultats
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour ajouter une pièce -->
+<div class="modal fade" bsModal #showModal="bs-modal" [config]="{backdrop: 'static'}" tabindex="-1" role="dialog" aria-labelledby="addPieceModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="addPieceModalLabel">Ajouter une nouvelle pièce</h4>
+                <button type="button" class="btn-close" (click)="showModal?.hide()" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form [formGroup]="pieceForm" (ngSubmit)="addPiece()">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="nom" class="form-label">Nom de la pièce</label>
+                            <input type="text" class="form-control" id="nom" formControlName="nom" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="reference" class="form-label">Référence</label>
+                            <input type="text" class="form-control" id="reference" formControlName="reference" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="consommationJournaliere" class="form-label">Consommation journalière moyenne</label>
+                            <input type="number" class="form-control" id="consommationJournaliere" 
+                                   formControlName="consommationJournaliere" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="delaiSecurite" class="form-label">Délai de sécurité (jours)</label>
+                            <input type="number" class="form-control" id="delaiSecurite" 
+                                   formControlName="delaiSecurite" required>
+                        </div>
+                       
+                       
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="groupe" class="form-label">Groupe</label>
+                            <select class="form-select" id="groupe" formControlName="groupe" (change)="onGroupeChange()" required>
+                                <option value="">Sélectionner un groupe</option>
+                                <option *ngFor="let groupe of groupes" [value]="groupe.id">{{ groupe.nom }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="sousGroupe" class="form-label">Sous-groupe</label>
+                            <select class="form-select" id="sousGroupe" formControlName="sousGroupe" required>
+                                <option value="">Sélectionner un sous-groupe</option>
+                                <option *ngFor="let sousGroupe of filteredSousGroupes" [value]="sousGroupe.id">{{ sousGroupe.nom }}</option>
+                            </select>
+                        </div>
+                       
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="quantite" class="form-label">Quantité initiale</label>
+                            <input type="number" class="form-control" id="quantite" formControlName="quantite" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="emplacement" class="form-label">Emplacement</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <span *ngFor="let emp of emplacements" 
+                                      class="badge p-2 cursor-pointer"
+                                      [class.bg-success]="selectedEmplacements.includes(emp)"
+                                      [class.bg-primary]="!selectedEmplacements.includes(emp)"
+                                      (click)="toggleEmplacement(emp)">
+                                    {{ emp }}
+                                </span>
+                            </div>
+                            
+                            
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" (click)="showModal?.hide()">Annuler</button>
+                        <button type="submit" class="btn btn-primary" [disabled]="!pieceForm.valid">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,24 @@
+.auth-page-wrapper {
+  background-image: url('~src/assets/images/teamwillback.png');
+  background-size: cover;
+  background-position: center;
+}
+.country-dropdown {
+  max-height: 200px; /* Adjust this value to your needs */
+  overflow-y: auto;
+}
+.position-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 25vh; /* Adjust the height to ensure it takes full viewport height */
+  padding: 20px; /* Add some padding around */
+}
+
+.form-check {
+  margin-bottom: 1rem; /* Adjust spacing between radio buttons */
+}
+
+.btn-primary {
+  width: 100%; /* Ensure the button stretches to full container width */
+}

@@ -1,0 +1,264 @@
+
+<div class="card">
+  <div class="card-body">
+    <div class="row align-items-center g-2">
+      <div class="col-lg-3 me-auto">
+        <h6 class="card-title mb-0">Liste des Offres <span class="badge bg-primary ms-1 align-baseline">{{paginatedOffres.length}}</span></h6>
+      </div><!--end col-->
+      <div class="col-lg-2">
+        <div class="search-box">
+          <input type="text" class="form-control search" placeholder="Chercher Offre" [(ngModel)]="term" (keyup)="filterdata()">
+          <i class="ri-search-line search-icon"></i>
+        </div>
+      </div><!--end col-->
+      <div class="col-lg-auto">
+        <div class="hstack gap-2">
+          <a href="javascript:void(0);" (click)="addInstructor.show()" class="btn btn-secondary"><i class="bi bi-plus-circle align-baseline me-1"></i> Ajouter Offre</a>
+        </div>
+      </div><!--end col-->
+    </div>
+  </div>
+</div><!--end card-->
+
+<div class="row row-cols-xxl-5">
+  <div class="col" *ngFor="let offre of offres">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <div class="form-check flex-grow-1">
+            <input class="form-check-input" type="checkbox" value="1" id="checkbox-1">
+            <label class="form-check-label" for="checkbox-1"></label>
+          </div>
+          <div class="flex-shrink-0">
+            <div dropdown class="dropdown">
+              <button dropdownToggle class="btn btn-light btn-icon btn-sm" type="button">
+                <i class="bi bi-three-dots-vertical"></i>
+              </button>
+              <ul *bsDropdownMenu class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item edit-list" href="javascript:void(0);" (click)="editList(offre.id)"><i class="bi bi-pencil-square me-1 align-baseline"></i>
+                  Edit</a></li>
+                <li><a class="dropdown-item remove-list" href="javascript:void(0);" (click)="removeItem(offre.id)" data-remove-id="9" data-bs-toggle="modal"><i class="bi bi-trash3 me-1 align-baseline"></i> Delete</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="text-center mt-4 mb-3">
+          <div class="position-relative d-inline-block">
+            <img [src]="offre.img" alt="" class="avatar-md rounded">
+            <span class="position-absolute top-0 start-100 translate-middle badge border border-2 border-white rounded-circle p-1"><span class="visually-hidden">unread messages</span></span>
+          </div>
+          <a routerLink="/learning/instructors-overview">
+            <h6 class="fs-md mt-4 mb-1">{{offre.titre}}</h6>
+          </a>
+          <p class="text-muted fs-sm mb-0">{{offre.description}}</p>
+        </div>
+        <ul class="list-unstyled text-muted vstack gap-2 mb-0 overflow-hidden">
+          <li>
+            <a class="text-reset d-block text-truncate"><i class="bi bi-envelope align-baseline me-1"></i> {{offre.user.email}}</a>
+          </li>
+          <li>
+            <a class="text-reset"><i class="bi bi-telephone align-baseline me-1"></i> {{offre.user.phone}}</a>
+          </li>
+          <li>
+            <i class="ph ph-graduation-cap align-baseline me-1"></i> {{offre.offerType}}
+          </li>
+        </ul>
+      </div>
+      <div class="card-body border-top border-dashed d-flex align-items-center">
+        <!-- Update the HTML to use the new method -->
+        <div class="flex-grow-1">
+          <span [ngClass]="{'badge': true, 'bg-warning-subtle text-warning': isExpired(offre), 'bg-success-subtle text-success': !isExpired(offre)}">
+            <i class="bi bi-star-fill align-baseline me-1"></i> {{ isExpired(offre) ? 'Exipré' : 'Disponible' }}
+          </span>
+        </div>
+        <div class="flex-shrink-0"></div>
+        <a [routerLink]="['/Company/learning/instructors-overview', offre.id]" class="link-effect">Détails <i class="bi bi-arrow-right align-baseline ms-1"></i></a>
+      </div>
+    </div><!--end card-->
+  </div><!--end col-->
+</div><!--end row--><div class="noresult"  style="display: none;">
+  <div class="text-center py-4">
+    <i class="ph-magnifying-glass fs-1 text-primary"></i>
+    <h5 class="mt-2">Ooops! Aucune offre n'est trouvée</h5>
+  </div>
+</div>
+
+<div id="elmLoader">
+  <div class="spinner-border text-primary avatar-sm" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>
+
+<div class="row align-items-center mb-3" id="pagination-element">
+  <div class="col-sm">
+    <div class="text-muted text-center text-sm-start">
+      Showing <span class="fw-semibold">{{offres.length}}</span> of <span class="fw-semibold">{{paginatedOffres.length}}</span> Results
+    </div>
+  </div><!--end col-->
+  <div class="col-sm-auto mt-3 mt-sm-0">
+    <pagination class="pagination-wrap hstack justify-content-center gap-2" [totalItems]="paginatedOffres.length" [itemsPerPage]="5" (pageChanged)="pageChanged($event)"></pagination>
+  </div><!--end col-->
+</div>
+<!-- Modal -->
+
+<div bsModal #addInstructor="bs-modal" class="modal fade" id="addInstructor">
+  <div class="modal-dialog">
+    <div class="modal-content border-0">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addInstructorModalLabel">Ajouter offre</h5>
+        <button type="button" class="btn-close" (click)="addInstructor.hide()"></button>
+      </div>
+
+<form (ngSubmit)="createNewOffre()" [formGroup]="GridForm" class="tablelist-form" novalidate autocomplete="off">
+  <div class="modal-body">
+    <div id="alert-error-msg" class="d-none alert alert-danger py-2"></div>
+    <input type="hidden" id="id-field">
+    <input type="hidden" id="rating-field">
+
+
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="mb-3">
+          <label for="titre-input" class="form-label">Titre<span class="text-danger">*</span></label>
+          <input type="text" id="titre-input" class="form-control" formControlName="titre" placeholder="Enter titre" required>
+        </div>
+      </div>
+
+      <div class="col-lg-12">
+        <div class="mb-3">
+          <label for="description-input" class="form-label">Description<span class="text-danger">*</span></label>
+          <input type="text" id="description-input" class="form-control" formControlName="description" placeholder="Enter description" required>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="mb-3">
+          <label for="startDate-input" class="form-label">Start Date<span class="text-danger">*</span></label>
+          <input type="date" id="startDate-input" class="form-control" formControlName="startDate" required>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="mb-3">
+          <label for="endDate-input" class="form-label">End Date<span class="text-danger">*</span></label>
+          <input type="date" id="endDate-input" class="form-control" formControlName="endDate" required>
+        </div>
+      </div>
+      <div class="col-lg-12">
+  <div class="mb-3">
+    <label for="offerType-input" class="form-label">Offer Type<span class="text-danger">*</span></label>
+    <select class="form-select" id="offerType-input" formControlName="offerType">
+      <option value="">Select Offer Type</option>
+      <option value="SUMMER_INTERSHIP">SUMMER_INTERSHIP</option>
+      <option value="PFE_INTERSHIP">PFE_INTERSHIP</option>
+      <option value="JOB">JOB</option>
+    </select>
+  </div>
+</div>
+      </div>
+  </div>
+  <div class="modal-footer">
+    <div class="hstack gap-2 justify-content-end">
+      <button type="button" class="btn btn-ghost-danger" (click)="addInstructor.hide()"><i class="bi bi-x-lg align-baseline me-1"></i> Close</button>
+      <button type="submit" class="btn btn-primary" id="add-btn">Ajouter Offre</button>
+    </div>
+  </div>
+</form>
+    </div>
+    <!-- modal-content -->
+  </div>
+</div>
+
+
+<!--end modal-->
+
+<div bsModal #editOffre="bs-modal" class="modal fade" id="editOffre">
+  <div class="modal-dialog">
+    <div class="modal-content border-0">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editOffreModalLabel">Edit Offer</h5>
+        <button type="button" class="btn-close" (click)="editOffre.hide()"></button>
+      </div>
+
+      <form (ngSubmit)="saveGrid()" [formGroup]="GridForm" class="tablelist-form" novalidate autocomplete="off">
+        <div class="modal-body">
+          <div id="alert-error-msg1" class="d-none alert alert-danger py-2"></div>
+          <input type="hidden" id="edit-id-field">
+          <input type="hidden" id="edit-rating-field">
+
+          <div class="row">
+            <div class="col-lg-12">
+              <div class="mb-3">
+                <label for="edit-titre-input" class="form-label">Titre<span class="text-danger">*</span></label>
+                <input type="text" id="edit-titre-input" class="form-control" formControlName="titre" placeholder="Enter titre" required>
+              </div>
+            </div>
+
+            <div class="col-lg-12">
+              <div class="mb-3">
+                <label for="edit-description-input" class="form-label">Description<span class="text-danger">*</span></label>
+                <input type="text" id="edit-description-input" class="form-control" formControlName="description" placeholder="Enter description" required>
+              </div>
+            </div>
+
+            <div class="col-lg-6">
+              <div class="mb-3">
+                <label for="edit-startDate-input" class="form-label">Start Date<span class="text-danger">*</span></label>
+                <input type="date" id="edit-startDate-input" class="form-control" formControlName="startDate" required>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="mb-3">
+                <label for="edit-endDate-input" class="form-label">End Date<span class="text-danger">*</span></label>
+                <input type="date" id="edit-endDate-input" class="form-control" formControlName="endDate" required>
+              </div>
+            </div>
+            <div class="col-lg-12">
+              <div class="mb-3">
+                <label for="edit-offerType-input" class="form-label">Offer Type<span class="text-danger">*</span></label>
+                <select class="form-select" id="edit-offerType-input" formControlName="offerType">
+                  <option value="">Select Offer Type</option>
+                  <option value="SUMMER_INTERSHIP">SUMMER_INTERSHIP</option>
+                  <option value="PFE_INTERSHIP">PFE_INTERSHIP</option>
+                  <option value="JOB">JOB</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="hstack gap-2 justify-content-end">
+            <button type="button" class="btn btn-ghost-danger" (click)="editOffre.hide()"><i class="bi bi-x-lg align-baseline me-1"></i> Close</button>
+            <button type="submit" class="btn btn-primary" id="edit-btn">Ajouter Offer</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    <!-- modal-content -->
+  </div>
+</div>
+<!-- deleteRecordModal -->
+<div bsModal #deleteRecordModal="bs-modal" id="deleteRecordModal" class="modal fade zoomIn">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="btn-close" id="deleteRecord-close" (click)="deleteRecordModal.hide()"></button>
+      </div>
+      <div class="modal-body p-md-5">
+        <div class="text-center">
+          <div class="text-danger">
+            <i class="bi bi-trash display-5"></i>
+          </div>
+          <div class="mt-4">
+            <h4 class="mb-2">Are you sure ?</h4>
+            <p class="text-muted mx-3 mb-0">Are you sure you want to remove this record ?</p>
+          </div>
+        </div>
+        <div class="d-flex gap-2 justify-content-center mt-4 pt-2 mb-2">
+          <button type="button" class="btn w-sm btn-light btn-hover" (click)="deleteRecordModal.hide()">Close</button>
+          <button type="button" class="btn w-sm btn-danger btn-hover" id="delete-record" (click)="confirmDelete()">Yes, Delete
+            It!</button>
+        </div>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /deleteRecordModal -->

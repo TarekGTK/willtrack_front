@@ -1,0 +1,99 @@
+<div class="card" >
+  <div class="card-body d-flex align-items-center flex-wrap gap-2">
+    <h5 class="card-title flex-grow-1 mb-0">Liste des postulation</h5>
+  </div>
+
+
+</div>
+
+<div class="tab-content" >
+  <div  class="tab-pane active" id="studentsList" role="tabpanel">
+    <div id="studentsListTable" class="mt-4 ">
+      <div class="row align-items-center gy-3 mb-2">
+        <div class="col-lg-3 col-md-6 order-last order-md-first me-auto">
+          <div class="search-box">
+            <input type="text" class="form-control search" placeholder="Search for courses, price or something..." [(ngModel)]="searchText" (ngModelChange)="studentSearch()">
+            <i class="ri-search-line search-icon"></i>
+          </div>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-custom align-middle table-borderless table-nowrap">
+          <thead>
+          <tr>
+            <th scope="col" class="sort cursor-pointer text-start" (click)="onSort('firstName')"> Name</th>
+            <th scope="col" class="sort cursor-pointer" (click)="onSort('email')">Email Address</th>
+            <th scope="col" class="sort cursor-pointer" (click)="onSort('phone')">Contact Number</th>
+            <th scope="col" class="text-center" >Files</th>
+            <th scope="col" class="" >Status</th>
+          </tr>
+          </thead>
+          <tbody class="list">
+              <tr *ngFor="let data of applications; trackBy: trackByFn">
+                <td>
+                  <div class="d-flex align-items-center gap-2 text-start">
+                    <div class="flex-shrink-0">
+                      <img [src]="data.offer.user.imageToShow" alt="" class="avatar-sm rounded">
+                    </div>
+                    <div class="flex-grow-1">
+                      <a routerLink="/pages/profile">
+                        <h6 class="fs-md mb-2 students_name">{{data.offer.titre}}</h6>
+                      </a>
+                      <p class="text-muted mb-0">{{ data.offer.offerType }}</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="students_emai l">{{data.offer.user.email}}</td>
+                <td class="students_contact">{{data.offer.user.phone}}</td>
+                <td class="text-center">
+                  <a  [href]="'http://localhost:1919/applications/openFile/' + data.cv" target="_blank">CV </a>
+                  -
+                  <a  [href]="'http://localhost:1919/applications/openFile/' + data.coverLetter" target="_blank">Cover Letter</a>
+                </td>
+
+                <td>
+                  <span class="badge students_status" [ngClass]="{'bg-success-subtle text-success':data.statusApplication === 'ACCEPTED','bg-danger-subtle text-danger':data.statusApplication==='REFUSED','bg-info-subtle text-info':data.statusApplication=='PENDING'}">{{data.statusApplication}}</span>
+                </td>
+              </tr>
+
+          </tbody>
+        </table>
+        <div class="noresult" *ngIf="noResultsFound || applications.length===0">
+          <div class="text-center py-4">
+            <i class="ph-magnifying-glass fs-1 text-primary"></i>
+            <h5 class="mt-2">Sorry! No Result Found</h5>
+          </div>
+        </div>
+      </div>
+      <div bsModal #createApplicationModal="bs-modal" class="modal fade">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="createApplicationLabel">Update Application</h1>
+              <button type="button" class="btn-close" id="create-close" (click)="createApplicationModal.hide()"></button>
+            </div>
+            <form (ngSubmit)="onUpdateApplication()" [formGroup]="createForm" class="tablelist-form" novalidate autocomplete="off">
+              <div class="modal-body">
+                <div id="alert-error-msg" class="d-none alert alert-danger py-2"></div>
+                <input type="hidden" id="id-field">
+                <div class="mb-3">
+                  <label for="coverLetter-input" class="form-label">Cover Letter <span class="text-danger">*</span></label>
+                  <input type="file" class="form-control" formControlName="coverLetter" id="coverLetter-input" (change)="onChangeCoverLetter($event)" required>
+                </div>
+                <div class="mb-3">
+                  <label for="cv-input" class="form-label">CV <span class="text-danger">*</span></label>
+                  <input type="file" class="form-control" formControlName="cv" id="cv-input" (change)="onChangeCV($event )" required>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-ghost-danger" (click)="createApplicationModal.hide()"><i class="ph-x align-middle me-1"></i> Close</button>
+                <button type="submit" class="btn btn-primary">Update</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <!--end course table-->
+    </div>
+  </div>
+</div><!--end tab content-->
