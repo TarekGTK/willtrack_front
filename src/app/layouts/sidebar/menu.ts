@@ -7,6 +7,36 @@ export const MENU: MenuItem[] = [
     label: 'MENUITEMS.MENU.TEXT',
     isTitle: true
   },
+
+
+    /*dashboard Bi*/
+  {
+    id: 3,
+    label: 'Dashboard BI',
+    icon: 'ph-gauge',
+    subItems: [
+      {
+        id: 2,
+        label: 'Recrutement ',
+        icon: 'ph-storefront',
+        link: '/pages/recrutementbi',
+        parentId: 3
+      },
+      {
+        id: 4,
+        label: 'Integration',
+        link: '/pages/integrationbi',
+        parentId: 3
+      },
+      {
+        id: 4,
+        label: 'Post-Integration',
+        link: '/pages/postintegrationbi',
+        parentId: 3
+      }
+      
+    ]
+  },
 /*utilisateur*/
  
   {
@@ -36,34 +66,7 @@ export const MENU: MenuItem[] = [
     ]
   },
 
-  /*dashboard Bi*/
-  {
-    id: 3,
-    label: 'Dashboard BI',
-    icon: 'ph-gauge',
-    subItems: [
-      {
-        id: 2,
-        label: 'Recrutement ',
-        icon: 'ph-storefront',
-        link: '/pages/recrutementbi',
-        parentId: 3
-      },
-      {
-        id: 4,
-        label: 'Integration',
-        link: '/pages/integrationbi',
-        parentId: 3
-      },
-      {
-        id: 4,
-        label: 'Post-Integration',
-        link: '/pages/postintegrationbi',
-        parentId: 3
-      }
-      
-    ]
-  },
+
  /*recrutement*/
   {
     id: 4,
@@ -74,7 +77,7 @@ export const MENU: MenuItem[] = [
         id: 2,
         label: 'Entretiens',
         icon: 'ph-storefront',
-        link: '/ecommerce/piece',
+        link: '/apps/calendar',
         parentId: 8
       },
       {
@@ -128,13 +131,29 @@ export const MENU: MenuItem[] = [
     link: '/pages/regroupement',
    
   },
+  {
+    id: 4,
+    label: 'Retention',
+    icon: 'ph-gauge',
+    subItems: [
    {
     id: 7,
-    label: 'Retention',
+    label: 'Retention Recrutement',
     icon: 'ph-storefront',
-    link: '/pages/retention',
+    link: '/pages/retention-recrutement',
    
   },
+  {
+    id: 7,
+    label: 'Retention Integration',
+    icon: 'ph-storefront',
+    link: '/pages/retention-integration',
+   
+  },
+
+]
+}
+
 
   /*
     {

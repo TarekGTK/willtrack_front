@@ -22,7 +22,6 @@ import {OfferUserJOBComponent} from "./stage/offerUserJOB/offer-UserJOB.componen
 import {MesofferAdminComponent} from "./stage/mesofferAdmin/mesoffer-Admin.component";
 import {OfferAdminComponent} from "./stage/offerAdmin/offer-Admin.component";
 import {ApplicationComponent} from "./stage/application/application.component";
-import { MagasinComponent } from './magasin/magasin.component';
 
 import { UsersComponent } from './stage/users/users.component';
 import { RegroupementComponent } from './stage/regroupement/regroupement.component';
@@ -34,6 +33,7 @@ import { RecrutementbiComponent } from './stage/recrutementbi/recrutementbi.comp
 import { IntegrationbiComponent } from './stage/integrationbi/integrationbi.component';
 import { PostintegrationbiComponent } from './stage/postintegrationbi/postintegrationbi.component';
 import { RetentionComponent } from './stage/retention/retention.component';
+import { RetentionRecrutementComponent } from './stage/retention-recrutement/retention-recrutement.component';
 
 
 const routes: Routes = [
@@ -158,7 +158,11 @@ const routes: Routes = [
     component:  PostintegrationbiComponent
   },
   {
-    path: 'retention',
+    path: 'retention-recrutement',
+    component:  RetentionRecrutementComponent
+  },
+   {
+    path: 'retention-integration',
     component:  RetentionComponent
   },
  

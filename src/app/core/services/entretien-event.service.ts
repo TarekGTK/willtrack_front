@@ -12,7 +12,7 @@ export class EntretienEventService {
 
  
   getAllEntretiensWithApplications(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/applications/entretiens`);
+    return this.http.get<any[]>(`${this.apiUrl}/all-with-interviews`);
   }
 
 

@@ -34,10 +34,10 @@ export class HorizontalTopbarComponent {
     console.log('User Role: ', this.userConnected.scope);
     if (this.userConnected.scope=== 'CONDIDAT') {
       this.menuItems = MENU1.clientMenu;
-    } else if (this.userConnected.scope === 'COMPANY') {
-      this.menuItems = MENU1.companyMenu;
-    } else if (this.userConnected.scope === 'STAFF') {
-      this.menuItems = MENU1.staffMenu;
+    } else if (this.userConnected.scope === 'RECRUTEUR') {
+      this.menuItems = MENU1.recruteurMenu;
+    } else if (this.userConnected.scope === 'RH') {
+      this.menuItems = MENU1.rhMenu;
     }
   }
   /***

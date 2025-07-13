@@ -53,7 +53,7 @@ export class TopbarComponent { country: any;
   tax: any;
   role: any;
   currentUser:any;
-  notificationList: any;
+  notificationList: any[]=[];
   receiveUserId : any;
   readNotifications: any;
   unreadNotifications: any;

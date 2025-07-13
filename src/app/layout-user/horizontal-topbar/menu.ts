@@ -46,7 +46,7 @@ export const MENU1 = {
 
 
 
-  companyMenu: [
+  recruteurMenu: [
 
     {
       id: 23,
@@ -59,13 +59,13 @@ export const MENU1 = {
       id: 4,
       label: 'Mes Offres',
       icon: 'ph-calendar',
-      link: '/Company/pages/offer',
+      link: '/Recruteur/pages/offer',
       parentId: 3
     },
 
   ],
 
-  staffMenu: [
+  rhMenu: [
     {
       id: 23,
       label: 'MENUITEMS.APPS.LIST.FILEMANAGER',
@@ -77,14 +77,14 @@ export const MENU1 = {
       id: 4,
       label: 'Offre d\'emploi',
       icon: 'ph-calendar',
-      link: '/Staff/pages/offerStaff',
+      link: '/Rh/pages/offerStaff',
       parentId: 3
     },
     {
       id: 5,
       label: 'Mes offres',
       icon: 'ph-calendar',
-      link:'/Staff/pages/mesofferStaff',
+      link:'/Rh/pages/mesofferStaff',
       parentId: 3
     },
 
@@ -96,143 +96,7 @@ export const MENU1 = {
 
 export const MENU: MenuItem[] = [
 
-  /*   {
-         id: 2,
-         label: 'MENUITEMS.DASHBOARD.TEXT',
-         icon: 'ph-gauge',
-         subItems: [
-             {
-                 id: 3,
-                 label: 'MENUITEMS.DASHBOARD.LIST.ANALYTICS',
-                 link: '/analytics',
-                 parentId: 2
-             },
-             {
-                 id: 4,
-                 label: 'MENUITEMS.DASHBOARD.LIST.CRM',
-                 link: '/crm',
-                 parentId: 2
-             },
-             {
-                 id: 5,
-                 label: 'MENUITEMS.DASHBOARD.LIST.ECOMMERCE',
-                 link: '/',
-                 parentId: 2
-             },
-             {
-                 id: 6,
-                 label: 'MENUITEMS.DASHBOARD.LIST.LEARNING',
-                 link: '/learning',
-                 parentId: 2
-             },
-             {
-                 id: 7,
-                 label: 'MENUITEMS.DASHBOARD.LIST.REALESTATE',
-                 link: '/real-estate',
-                 parentId: 2
-             }
-         ]
-     },
-     {
-         id: 8,
-         label: 'MENUITEMS.APPS.TEXT',
-         isTitle: true
-     },
-     {
-         id: 9,
-         label: 'MENUITEMS.APPS.LIST.CALENDAR',
-         icon: 'ph-calendar',
-         link: '/apps/calendar',
-         parentId: 8
-     },
-     {
-         id: 10,
-         label: 'MENUITEMS.APPS.LIST.CHAT',
-         icon: 'ph-chats',
-         link: '/apps/chat',
-         parentId: 8
-     },
-     {
-         id: 11,
-         label: 'MENUITEMS.APPS.LIST.EMAIL',
-         icon: 'ph-envelope',
-         link: '/apps/email',
-         parentId: 8,
-     },
-     {
-         id: 12,
-         label: 'MENUITEMS.APPS.LIST.ECOMMERCE',
-         icon: 'ph-storefront',
-         parentId: 8,
-         subItems: [
-             {
-                 id: 13,
-                 label: 'MENUITEMS.APPS.LIST.PRODUCTS',
-                 link: '/ecommerce/products',
-                 parentId: 12
-             },
-             {
-                 id: 13,
-                 label: 'MENUITEMS.APPS.LIST.PRODUCTGRID',
-                 link: '/ecommerce/products-grid',
-                 parentId: 12
-             },
-             {
-                 id: 14,
-                 label: 'MENUITEMS.APPS.LIST.PRODUCTDETAILS',
-                 link: '/ecommerce/product-details',
-                 parentId: 12
-             },
-             {
-                 id: 15,
-                 label: 'MENUITEMS.APPS.LIST.CREATEPRODUCT',
-                 link: '/ecommerce/add-product',
-                 parentId: 12
-             },
-             {
-                 id: 16,
-                 label: 'MENUITEMS.APPS.LIST.ORDERS',
-                 link: '/ecommerce/orders',
-                 parentId: 12
-             },
-             {
-                 id: 17,
-                 label: 'MENUITEMS.APPS.LIST.ORDEROVERVIEW',
-                 link: '/ecommerce/order-overview',
-                 parentId: 12
-             },
-             {
-                 id: 18,
-                 label: 'MENUITEMS.APPS.LIST.CUSTOMERS',
-                 link: '/ecommerce/customers',
-                 parentId: 12
-             },
-             {
-                 id: 19,
-                 label: 'MENUITEMS.APPS.LIST.SHOPPINGCART',
-                 link: '/ecommerce/cart',
-                 parentId: 12
-             },
-             {
-                 id: 20,
-                 label: 'MENUITEMS.APPS.LIST.CHECKOUT',
-                 link: '/ecommerce/checkout',
-                 parentId: 12
-             },
-             {
-                 id: 21,
-                 label: 'MENUITEMS.APPS.LIST.SELLERS',
-                 link: '/ecommerce/sellers',
-                 parentId: 12
-             },
-             {
-                 id: 22,
-                 label: 'MENUITEMS.APPS.LIST.SELLEROVERVIEW',
-                 link: '/ecommerce/seller-overview',
-                 parentId: 12
-             }
-         ]
-     },*/
+ 
   {
     id: 23,
     label: 'MENUITEMS.APPS.LIST.FILEMANAGER',
@@ -244,7 +108,7 @@ export const MENU: MenuItem[] = [
     id: 4,
     label: 'Offre d\'emploi',
     icon: 'ph-calendar',
-    link: '/Company/pages/offer',
+    link: '/Recruteur/pages/offer',
     parentId: 3
   },
   {

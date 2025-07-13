@@ -35,12 +35,16 @@ export class LoginComponent implements OnInit{
 
     // Ensure that SocialAuthService is initialized before calling signIn method
 
-    let currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+     let currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
     if(currentUser['scope'] === 'ADMIN'){
-      this.router.navigate(['/']);
+      this.router.navigate(['/pages/recrutementbi']);
     } else if(currentUser['scope'] === 'USER'){
       this.router.navigate(['/User']);
-    } 
+    } else if(currentUser['scope'] === 'RH'){
+      this.router.navigate(['/Rh']);
+    } else if(currentUser['scope'] === 'RECRUTEUR'){
+      this.router.navigate(['/Recruteur']);
+    }
 
     /**
      * Form Validatyion
@@ -64,13 +68,13 @@ export class LoginComponent implements OnInit{
         if (response && response.accessToken) {
           console.log(response);
           if (this.authService.currentUser()['scope'] === 'ADMIN') {
-            this.router.navigate(['/tickets/home']);
+            this.router.navigate(['/pages/recrutementbi']);
           } else if (this.authService.currentUser()['scope'] === 'CONDIDAT') {
-            this.router.navigate(['/User']);
-          } else if (this.authService.currentUser()['scope'] === 'STAFF') {
-            this.router.navigate(['/Staff']);
-          } else if (this.authService.currentUser()['scope'] === 'COMPANY') {
-            this.router.navigate(['/Company']);
+            this.router.navigate(['/User/tickets/home']);
+          } else if (this.authService.currentUser()['scope'] === 'RH') {
+            this.router.navigate(['/Rh']);
+          } else if (this.authService.currentUser()['scope'] === 'RECRUTEUR') {
+            this.router.navigate(['/Recruteur']);
           }
         }
       },

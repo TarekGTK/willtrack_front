@@ -1,320 +1,202 @@
-import { Component, ViewChild } from '@angular/core';
-import { UntypedFormBuilder, Validators, UntypedFormGroup } from '@angular/forms';
-
-
-// Sweet Alert
-import Swal from 'sweetalert2';
-
-// Calendar option
-import { CalendarOptions, EventApi, EventClickArg, EventInput } from '@fullcalendar/core';
+import { Component, ViewChild, OnInit } from '@angular/core';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { CalendarOptions, EventApi, EventClickArg } from '@fullcalendar/core';
 import interactionPlugin from '@fullcalendar/interaction';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
-import { defaultevent, events, createEventId } from './data';
+import Swal from 'sweetalert2';
 import { ModalDirective } from 'ngx-bootstrap/modal';
+import { EntretienEventService } from 'src/app/core/services/entretien-event.service';
+
 
 @Component({
   selector: 'app-calendar',
   templateUrl: './calendar.component.html',
   styleUrls: ['./calendar.component.scss']
 })
-
-// calendar Component
-export class CalendarComponent {
-
-  // calendar
-  calendarEvents!: EventInput[];
-  editEvent: any;
-  newEventDate: any;
-  formEditData!: UntypedFormGroup;
-  submitted = false;
-  formData!: UntypedFormGroup;
-  isEditMode: boolean = false;
-  upcomingEvents: any;
-
+export class CalendarComponent implements OnInit {
   @ViewChild('eventModal', { static: false }) eventModal?: ModalDirective;
 
-  constructor(private formBuilder: UntypedFormBuilder) { }
+  calendarOptions!: CalendarOptions;
+  calendarEvents: any[] = [];
+  formData!: UntypedFormGroup;
+  isEditMode = false;
+  editEvent!: EventApi;
+  newEventDate: any;
+  submitted = false;
+  applications: any[] = [];
+  selectedStatus: string = 'ALL';
+  entretiensAll: any[] = [];
+
+  constructor(
+    private fb: UntypedFormBuilder,
+    private entretienService: EntretienEventService
+  ) {}
 
   ngOnInit(): void {
-
-    // Validation
-    this.formData = this.formBuilder.group({
-      title: ['', [Validators.required]],
-      category: ['', [Validators.required]],
-      location: ['', [Validators.required]],
-      description: ['', [Validators.required]],
+    this.formData = this.fb.group({
+      applicationId: ['', Validators.required],
+      type: ['', Validators.required],
+      location: ['', Validators.required],
       date: ['', Validators.required],
-      start: [''],
-      end: ['']
+      start: ['', Validators.required],
+      end: ['', Validators.required],
     });
 
-    // Calender Event Data
-    this.calendarEvents = events;
-    this.upcomingEvents = defaultevent;
+    this.loadEntretiens();
   }
 
-  /***
- * Calender Set
- */
-  calendarOptions: CalendarOptions = {
-    plugins: [dayGridPlugin, listPlugin, interactionPlugin, timeGridPlugin],
-    headerToolbar: {
-      right: 'dayGridMonth,dayGridWeek,dayGridDay,listWeek',
-      center: 'title',
-      left: 'prev,next today'
-    },
-    initialView: 'dayGridMonth',
-    initialEvents: events,
-    themeSystem: "bootstrap",
-    timeZone: 'local',
-    droppable: true,
-    editable: true,
-    selectable: true,
-    navLinks: true,
-    select: this.openModal.bind(this),
-    eventClick: this.handleEventClick.bind(this),
-    eventsSet: this.handleEvents.bind(this),
-    eventResizableFromStart: true,
-  };
-  currentEvents: EventApi[] = [];
+  loadEntretiens(): void {
+    this.entretienService.getAllEntretiensWithApplications().subscribe(apps => {
+      const entretiens = [];
+      for (const app of apps) {
+        const candidat = app.user;
+        for (const entretien of app.entretienList || []) {
+          entretiens.push({
+            ...entretien,
+            applicationId: app.id,
+            candidatNom: candidat.nom + ' ' + candidat.prenom,
+            photoUrl: candidat.photoProfilUrl,
+            statusEntretien: entretien.statusEntretien
+          });
+        }
+      }
+      this.entretiensAll = entretiens;
+      this.applications = apps;
+      this.filterEvents();
+    });
+  }
 
-  /**
-   * Event add modal
-   */
-  openModal(events?: any) {
+  filterEvents(): void {
+    const filtered = this.selectedStatus === 'ALL'
+      ? this.entretiensAll
+      : this.entretiensAll.filter(e => e.statusEntretien === this.selectedStatus);
+
+    this.calendarEvents = filtered.map(entretien => ({
+      id: entretien.id.toString(),
+      title: `${entretien.typeEntretien} - ${entretien.statusEntretien}`,
+      start: new Date(entretien.dateEntretien),
+      end: new Date(entretien.dateEntretien),
+      extendedProps: {
+        location: entretien.lieu,
+        description: `Application ID: ${entretien.applicationId}`
+      },
+      className: this.getColorClass(entretien.statusEntretien)
+    }));
+
+    this.initCalendar();
+  }
+
+  getColorClass(status: string): string {
+    switch (status) {
+      case 'PLANIFIE': return 'bg-warning';
+      case 'ACCEPTE': return 'bg-success';
+      case 'REFUSE': return 'bg-danger';
+      default: return 'bg-primary';
+    }
+  }
+
+  initCalendar(): void {
+    this.calendarOptions = {
+      plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
+      initialView: 'dayGridMonth',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+      },
+      editable: true,
+      droppable: true,
+      events: this.calendarEvents,
+      select: this.openModal.bind(this),
+      eventClick: this.handleEventClick.bind(this),
+      drop: (info) => this.handleDrop(info) // Handle the drag-and-drop action
+    };
+  }
+
+  openModal(selectInfo: any): void {
     this.isEditMode = false;
-
-    setTimeout(() => {
-      var modaltitle = document.querySelector('.modal-title') as HTMLAreaElement;
-      modaltitle.innerHTML = "Add Event";
-
-      var modalbtn = document.querySelector('#btn-save-event') as HTMLAreaElement;
-      modalbtn.innerHTML = "Add Event";
-
-      document.getElementById('btn-delete-event')?.classList.add('d-none');
-
-      (document.querySelector(".event-form") as HTMLElement).style.display = "block";
-    }, 100);
-
-    this.eventModal?.show();
+    this.newEventDate = selectInfo;
+    this.formData.reset();
     this.submitted = false;
-    this.newEventDate = events;
+    this.eventModal?.show();
   }
 
-  /**
-   * Event click modal show
-   */
-  handleEventClick(clickInfo: EventClickArg) {
+  handleEventClick(clickInfo: EventClickArg): void {
     this.isEditMode = true;
     this.editEvent = clickInfo.event;
-    this.eventModal?.show();
-
-    setTimeout(() => {
-      (document.querySelector(".event-details") as HTMLElement).style.display = "block";
-      (document.querySelector(".event-form") as HTMLElement).style.display = "none";
-
-      document.getElementById('btn-delete-event')?.classList.remove('d-none');
-
-      var editbtn = document.querySelector('#edit-event-btn') as HTMLAreaElement;
-      editbtn.innerHTML = 'edit';
-
-      (document.getElementById('btn-save-event') as HTMLElement).setAttribute("hidden", "true");
-
-      var modaltitle = document.querySelector('.modal-title') as HTMLAreaElement;
-      modaltitle.innerHTML = this.editEvent.title
-
-    }, 100);
-
-    this.formData = this.formBuilder.group({
-      title: clickInfo.event.title,
-      category: clickInfo.event.classNames[0],
+    const start = clickInfo.event.start!;
+    this.formData.patchValue({
+      applicationId: clickInfo.event.extendedProps['description'].split(':')[1].trim(),
+      type: clickInfo.event.title.split(' - ')[0],
       location: clickInfo.event.extendedProps['location'],
-      description: clickInfo.event.extendedProps['description'],
-      date: clickInfo.event.start,
-      start: (clickInfo.event.start ? clickInfo.event.start : ''),
-      end: (clickInfo.event.end ? clickInfo.event.end : '')
+      date: start.toISOString().substr(0, 10),
+      start: start.toTimeString().substr(0, 5),
+      end: start.toTimeString().substr(0, 5)
     });
-
+    this.eventModal?.show();
   }
 
-  showeditEvent() {
-    if (document.querySelector('#edit-event-btn')?.innerHTML == 'cancel') {
+  saveEvent(): void {
+    this.submitted = true;
+    if (this.formData.invalid) return;
+
+    const fd = this.formData.value;
+    const dt = new Date(fd.date);
+    const [h, m] = fd.start.split(':').map(Number);
+    dt.setHours(h, m);
+
+    this.entretienService.planifierEntretien(
+      fd.applicationId,
+      fd.type,
+      dt,
+      fd.location
+    ).subscribe(res => {
+      Swal.fire('Succès', 'Entretien planifié', 'success');
       this.eventModal?.hide();
-    } else {
-      (document.querySelector(".event-details") as HTMLElement).style.display = "none";
-      (document.querySelector(".event-form") as HTMLElement).style.display = "block";
-      (document.getElementById('btn-save-event') as HTMLElement).removeAttribute("hidden");
-      var modalbtn = document.querySelector('#btn-save-event') as HTMLAreaElement;
-      modalbtn.innerHTML = "Update Event"
-      var editbtn = document.querySelector('#edit-event-btn') as HTMLAreaElement;
-      editbtn.innerHTML = 'cancel'
-    }
+      this.loadEntretiens();
+    }, () => Swal.fire('Erreur', 'Échec de planification', 'error'));
   }
 
-  /**
-   * Events bind in calander
-   * @param events events
-   */
-  handleEvents(events: EventApi[]) {
-    this.currentEvents = events;
-  }
-
-  /**
-  * Close event modal
-  */
-  closeEventModal() {
-    this.formData = this.formBuilder.group({
-      title: '',
-      category: '',
-      location: '',
-      description: '',
-      date: '',
-      start: '',
-      end: ''
-    });
-    this.eventModal?.hide();
-  }
-
-  /***
- * Model Position Set
- */
-  position() {
-    Swal.fire({
-      position: 'center',
-      icon: 'success',
-      title: 'Event has been saved',
-      showConfirmButton: false,
-      timer: 1000,
-    });
-  }
-
-  /***
-   * Model Edit Position Set
-   */
-  Editposition() {
-    Swal.fire({
-      position: 'center',
-      icon: 'success',
-      title: 'Event has been Updated',
-      showConfirmButton: false,
-      timer: 1000,
-    });
-  }
-  modalTitle: string = '';
-  saveButtonText: string = '';
-  editCancelButtonText: string = 'Edit';
-
-  /**
-  * Save the event
-  */
-  saveEvent() {
-    if (document.querySelector('#btn-save-event')?.innerHTML == 'Add Event') {
-      if (this.formData.valid) {
-        const className = this.formData.get('category')!.value;
-        const title = this.formData.get('title')!.value;
-        const location = this.formData.get('location')!.value;
-        const description = this.formData.get('description')!.value
-        const date = this.formData.get('date')!.value
-        const starttime = this.formData.get('start')!.value;
-        const endtime = this.formData.get('end')!.value;
-
-        const start = new Date(starttime).toTimeString().split(' ')[0];
-        // start.setHours((starttime.split(' ')[0]).split(':')[0]);
-        // start.setMinutes((starttime.split(' ')[0]).split(':')[1]);
-        const end = new Date(endtime).toTimeString().split(' ')[0];;
-        // const end = new Date(mm + '-' + dd + '-' + yy);
-        // end.setHours((endtime.split(' ')[0]).split(':')[0]);
-        // end.setMinutes((endtime.split(' ')[0]).split(':')[1]);
-        const calendarApi = this.newEventDate.view.calendar;
-        calendarApi.addEvent({
-          id: createEventId(),
-          title,
-          date,
-          starttime,
-          endtime,
-          location,
-          description,
-          className: className
-        });
-        this.position();
-        this.resetForm();
+  deleteEvent(): void {
+    if (this.editEvent) {
+      const id = this.editEvent.id;
+      this.entretienService.annulerEntretien(id).subscribe(() => {
+        Swal.fire('Annulé', 'Entretien supprimé', 'success');
+        this.loadEntretiens();
         this.eventModal?.hide();
-        this.submitted = true;
-      }
-    } else {
-      this.editEventSave()
+      });
     }
   }
 
-  resetForm() {
-    this.formData.reset({
-      title: '',
-      className: '',
-      location: '',
-      description: '',
-      date: '',
-      start: '',
-      end: ''
-    });
-    this.eventModal?.hide();
+  onStatusChange(): void {
+    this.filterEvents();
   }
 
-  /**
-   * save edit event data
-   */
-  editEventSave() {
-    this.isEditMode = true;
-    const editTitle = this.formData.get('title')!.value;
-    const editCategory = this.formData.get('category')!.value;
-    const editdate = this.formData.get('date')!.value;
-    const editstart = this.formData.get('date')!.value;
-    const editend = this.formData.get('end')!.value;
-    const editlocation = this.formData.get('location')!.value;
-    const editdescription = this.formData.get('description')!.value;
-
-    const editId = this.calendarEvents.findIndex(
-      (x) => x.id + '' === this.editEvent.id + ''
+  filteredApplications(): any[] {
+    if (this.selectedStatus === 'ALL') return this.applications;
+    return this.applications.filter(app =>
+      app.entretienList?.some((e: any) => e.statusEntretien === this.selectedStatus)
     );
-
-    this.editEvent.setProp('title', editTitle);
-    this.editEvent.setProp('classNames', editCategory);
-    this.editEvent.setProp('date', editdate);
-    this.editEvent.setProp('start', editdate);
-    this.editEvent.setProp('end', editend);
-    this.editEvent.setProp('location', editlocation);
-    this.editEvent.setProp('description', editdescription);
-
-    this.calendarEvents[editId] = {
-      // ...this.editEvent,
-      allDay: false,
-      title: editTitle,
-      id: this.editEvent.id,
-      classNames: editCategory,
-      start: editstart,
-    };
-    this.Editposition();
-    this.resetForm();
-    this.eventModal?.hide();
   }
 
-  /**
-   * Delete event
-   */
-  deleteEventData() {
-    this.editEvent.remove();
-    this.formData = this.formBuilder.group({
-      title: '',
-      category: '',
-      location: '',
-      description: '',
-      date: '',
-      start: '',
-      end: ''
-    });
-    this.eventModal?.hide();
+  getStatusForApplication(appId: number): string | null {
+    const e = this.entretiensAll.find(e => e.applicationId === appId);
+    return e ? e.statusEntretien : null;
   }
 
+  handleDrop(info: any): void {
+    const applicationId = info.event.extendedProps.description.split(':')[1].trim();
+    const app = this.applications.find(app => app.id === Number(applicationId));
 
+    
+    if (app && app.status !== 'REFUSE') {
+      
+      this.saveEvent();
+    } else {
+      Swal.fire('Erreur', 'Vous ne pouvez pas planifier un entretien pour une candidature refusée.', 'error');
+      info.revert();
+    }
+  }
 }
