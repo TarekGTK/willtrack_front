@@ -74,17 +74,12 @@
 </div>
 
 
-<!-- MODAL PLANIFICATION -->
+<!-- MODAL Accceptation && refus-->
 <div class="modal fade" bsModal #eventModal="bs-modal" tabindex="-1" role="dialog" aria-labelledby="eventModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
     <div class="modal-content">
-      <form [formGroup]="formData" (ngSubmit)="saveEvent()">
-        <div class="modal-header">
-          <h5 class="modal-title" id="eventModalLabel">
-            {{ isEditMode ? 'Modifier l’entretien' : 'Planifier un entretien' }}
-          </h5>
-          <button type="button" class="btn-close" aria-label="Close" (click)="eventModal?.hide()"></button>
-        </div>
+      <form [formGroup]="formData" >
+      
 
         <div class="modal-body">
           <div class="row g-3">
@@ -147,23 +142,36 @@
               <label for="responsableId" class="form-label">Responsable</label>
             
               <!-- Affiche le responsable en mode édition -->
-              <input *ngIf="isEditMode" type="text" class="form-control" [value]="selectedResponsable?.email" disabled>
+              <input  type="text" class="form-control" [value]="selectedResponsable?.email" disabled>
             
-              <!-- Select des responsables disponibles en mode création -->
-              <select *ngIf="!isEditMode" formControlName="responsableId" class="form-select" required>
-                <option *ngFor="let r of responsables" [value]="r.id">{{ r.email }}</option>
-              </select>
+          
             </div>
           </div>
         </div>
 
-        <!-- FOOTER -->
+       
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" (click)="eventModal?.hide()">Annuler</button>
-          <button *ngIf="isEditMode" type="button" class="btn btn-danger" (click)="deleteEvent()">Supprimer</button>
-          <button type="submit" class="btn btn-primary">
-            {{ isEditMode ? 'Mettre à jour' : 'Planifier' }}
-          </button>
+        
+        
+         
+            <ng-container *ngIf="showButtons && selectedEntretien?.statusEntretien === 'PLANIFIE'; else noButtons">
+             
+                <button type="button" class="btn btn-success" (click)="accepterEntretien()">Accepter</button>
+                <button type="button" class="btn btn-danger" (click)="refuserEntretien()">Refuser</button>
+            
+      
+            
+            </ng-container>
+      
+           
+            <ng-template #noButtons>
+             
+            </ng-template>
+        
+      
+        
+      
         </div>
       </form>
     </div>

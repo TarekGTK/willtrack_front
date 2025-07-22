@@ -33,11 +33,11 @@ export interface ApplicationDTO {
 }
 
 @Component({
-  selector: 'app-calendar',
-  templateUrl: './calendar.component.html',
-  styleUrls: ['./calendar.component.scss']
+  selector: 'app-calendar-rh',
+  templateUrl: './calendar-rh.component.html',
+  styleUrl: './calendar-rh.component.scss'
 })
-export class CalendarComponent implements OnInit, AfterViewInit {
+export class CalendarRhComponent {
   @ViewChild('eventModal', { static: false }) eventModal?: ModalDirective;
 
   calendarOptions!: CalendarOptions;
@@ -52,6 +52,8 @@ export class CalendarComponent implements OnInit, AfterViewInit {
    responsables: any[] = []; 
   selectedRoleType: any = 'RH';
   selectedResponsable: any = null;
+  showButtons: boolean = false; 
+  selectedEntretien: EntretienDTO | null = null;
   constructor(
     private fb: UntypedFormBuilder,
     private entretienService: EntretienEventService
@@ -113,6 +115,7 @@ export class CalendarComponent implements OnInit, AfterViewInit {
     this.entretienService.getResponsablesDisponibles(selectedDate, this.selectedRoleType).subscribe(
       (responsables: any[]) => {
         this.responsables = responsables;
+        console.log('role selct type ')
         console.log('display list of responsable ',responsables)
       },
       error => {
@@ -181,7 +184,7 @@ export class CalendarComponent implements OnInit, AfterViewInit {
       MANAGER: '📊',
       
     };
-
+  
     const eventTypeIcon = icons[typeEntretien as keyof typeof icons] || '📅';
   
     const customHtml = `
@@ -264,12 +267,14 @@ export class CalendarComponent implements OnInit, AfterViewInit {
     this.isEditMode = true;
     const start = clickInfo.event.start!;
     const localDate = new Date(start);
-  
-   
+
     const entretienId = clickInfo.event.id;
     this.entretienService.getEntretienById(entretienId).subscribe(entretien => {
+      this.selectedEntretien = entretien; 
+
       this.selectedResponsable = entretien.responsable;
-  
+      this.showButtons = entretien.statusEntretien === 'PLANIFIE';
+
       this.formData.patchValue({
         applicationId: entretien.application.id,
         type: entretien.typeEntretien,
@@ -278,7 +283,16 @@ export class CalendarComponent implements OnInit, AfterViewInit {
         start: entretien.heureDebut.substring(0, 5),
         end: entretien.heureFin.substring(0, 5)
       });
-  
+
+      const type = entretien.typeEntretien?.toUpperCase();
+      if (type === 'RH') {
+        this.selectedRoleType = 'RH';
+      } else if (type === 'MANAGER') {
+        this.selectedRoleType = 'MANAGER';
+      } else {
+        this.selectedRoleType = 'RECRUTEUR';
+      }
+
       this.eventModal?.show();
     });
   }
@@ -365,4 +379,73 @@ export class CalendarComponent implements OnInit, AfterViewInit {
       this.initCalendar();
     }
   }
+
+  accepterEntretien(): void {
+    const entretienId = this.getCurrentEntretienId();
+    if (!entretienId) return;
+  
+    this.entretienService.traiterEntretien(entretienId, true).subscribe({
+      next: () => {
+        Swal.fire('Succès', 'Entretien accepté', 'success');
+        this.eventModal?.hide();
+        this.loadEntretiens();
+      },
+      error: () => {
+        Swal.fire('Erreur', 'Impossible d’accepter l’entretien', 'error');
+      }
+    });
+  }
+  
+  refuserEntretien(): void {
+    const entretienId = this.getCurrentEntretienId();
+    if (!entretienId) return;
+  
+    this.entretienService.traiterEntretien(entretienId, false).subscribe({
+      next: () => {
+        Swal.fire('Succès', 'Entretien refusé', 'success');
+        this.eventModal?.hide();
+        this.loadEntretiens();
+      },
+      error: () => {
+        Swal.fire('Erreur', 'Impossible de refuser l’entretien', 'error');
+      }
+    });
+  }
+  
+  private getCurrentEntretienId(): number | null {
+    const rawValue = this.formData?.get('applicationId')?.value;
+    const appId = rawValue !== null ? Number(rawValue) : null;
+  
+    if (appId === null || isNaN(appId)) return null;
+  
+    const entretien = this.entretiensAll.find(e => e.applicationId === appId);
+    return entretien?.id ?? null;
+  }
+  modifierDateEntretien(): void {
+    this.submitted = true;
+    if (this.formData.invalid) return;
+  
+    const fd = this.formData.getRawValue();
+    const entretienId = this.getCurrentEntretienId; 
+  
+    const dt = new Date(fd.date);
+    const [h, m] = fd.start.split(':').map(Number);
+    dt.setHours(h, m);
+  
+    this.entretienService.modifierDateEntretien(
+      entretienId,
+      dt.toISOString(),
+      fd.start,
+      fd.end
+    ).subscribe(() => {
+      Swal.fire('Succès', 'Date de l\'entretien modifiée', 'success');
+      this.eventModal?.hide();
+      this.loadEntretiens();
+    }, () => {
+      Swal.fire('Erreur', 'Échec de la modification', 'error');
+    });
+  }
+  
+  
+  
 }

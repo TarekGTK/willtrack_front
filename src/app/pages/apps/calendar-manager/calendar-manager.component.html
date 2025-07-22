@@ -1,0 +1,181 @@
+<div class="container-fluid">
+    <!-- FILTRE PAR STATUT -->
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label for="statusFilter">Filtrer par statut</label>
+        <select id="statusFilter" class="form-select" [(ngModel)]="selectedStatus" (change)="onStatusChange()">
+          <option value="ALL">Tous</option>
+          <option value="PLANIFIE">Planifié</option>
+          <option value="ACCEPTE">Accepté</option>
+          <option value="REFUSE">Refusé</option>
+        </select>
+      </div>
+    </div>
+  
+    <div class="row">
+      <!-- CALENDRIER -->
+      <div class="col-md-8">
+        <div *ngIf="calendarOptions">
+          <full-calendar [options]="calendarOptions"></full-calendar>
+        </div>
+      </div>
+  
+      <!-- CANDIDATURES -->
+      <div class="col-md-4">
+        <h5 class="mb-3">Candidatures</h5>
+        <div id="external-events">
+          <div *ngFor="let app of filteredApplications()">
+            <div
+              class="card mb-3 shadow-sm draggable-application"
+              [ngClass]="{
+                'bg-danger text-white': app.statusApplication === 'REFUSE',
+                'bg-success text-white': app.statusApplication === 'ACCEPTE',
+                'bg-warning text-dark': app.statusApplication === 'PLANIFIE'
+              }"
+              [attr.data-application]="serializeApp(app)"
+            >
+              <div class="card-body d-flex">
+                <img
+                  [src]="getPhoto(app.userPhotoUrl)"
+                  alt="Photo"
+                  width="50"
+                  height="50"
+                  class="rounded-circle me-3"
+                />
+                <div>
+                  <strong>{{ app.userFullName }}</strong><br />
+                  <small>Statut: {{ app.statusApplication || 'Aucun entretien' }}</small>
+  
+                  <div class="mt-2">
+                    <h6 class="mb-1">Entretiens</h6>
+                    <div *ngIf="!app.entretiens || app.entretiens.length === 0; else entretienListBlock" class="text-muted fst-italic">
+                      Ce candidat n’a pas encore d’entretien planifié. <br />
+                      Faites glisser sa carte vers le calendrier pour commencer.
+                    </div>
+  
+                    <ng-template #entretienListBlock>
+                      <div style="max-height: 150px; overflow-y: auto;">
+                        <div *ngFor="let entretien of app.entretiens">
+                          <p class="mb-1">
+                            {{ getEntretienIcon(entretien.typeEntretien) }}
+                            {{ entretien.typeEntretien }} - {{ entretien.statusEntretien }}
+                          </p>
+                        </div>
+                      </div>
+                    </ng-template>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div> 
+      </div>
+    </div>
+  </div>
+  
+  
+  <!-- MODAL Accceptation && refus-->
+  <div class="modal fade" bsModal #eventModal="bs-modal" tabindex="-1" role="dialog" aria-labelledby="eventModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+      <div class="modal-content">
+        <form [formGroup]="formData" >
+        
+  
+          <div class="modal-body">
+            <div class="row g-3">
+              <!-- Candidat (lecture seule) -->
+              <div class="col-md-6">
+                <label class="form-label">Candidat</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [value]="getSelectedAppName()"
+                  disabled
+                />
+              </div>
+  
+              <!-- Type d'entretien -->
+              <div class="col-md-6">
+                <label for="type" class="form-label">Type d’entretien</label>
+                <select formControlName="type" class="form-select" [disabled]="true">
+                  <option value="RH">RH</option>
+                  <option value="TECHNIQUE">Technique</option>
+                  <option value="MANAGER">Manager</option>
+                </select>
+                <div class="form-text text-muted fst-italic">
+                  Le type d'entretien est défini automatiquement selon l'historique du candidat.
+                </div>
+              </div>
+  
+              <!-- Date -->
+              <div class="col-md-6">
+                <label for="date" class="form-label">Date</label>
+                <input type="date" formControlName="date" class="form-control" required />
+              </div>
+  
+              <!-- Heure début -->
+              <div class="col-md-3">
+                <label for="start" class="form-label">Heure début</label>
+                <input type="time" formControlName="start" class="form-control" required />
+              </div>
+  
+              <!-- Heure fin -->
+              <div class="col-md-3">
+                <label for="end" class="form-label">Heure fin</label>
+                <input type="time" formControlName="end" class="form-control" required />
+              </div>
+  
+              <!-- Lieu -->
+              <div class="col-12">
+                <label for="location" class="form-label">Lieu</label>
+                <input
+                  type="text"
+                  formControlName="location"
+                  class="form-control"
+                  placeholder="Ex: Google Meet, Bureau, etc."
+                  required
+                />
+              </div>
+  
+              <!-- Responsable -->
+              <div class="col-12">
+                <label for="responsableId" class="form-label">Responsable</label>
+              
+                <!-- Affiche le responsable en mode édition -->
+                <input  type="text" class="form-control" [value]="selectedResponsable?.email" disabled>
+              
+            
+              </div>
+            </div>
+          </div>
+  
+         
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="eventModal?.hide()">Annuler</button>
+          
+          
+           
+              <ng-container *ngIf="showButtons && selectedEntretien?.statusEntretien === 'PLANIFIE'; else noButtons">
+               
+                  <button type="button" class="btn btn-success" (click)="accepterEntretien()">Accepter</button>
+                  <button type="button" class="btn btn-danger" (click)="refuserEntretien()">Refuser</button>
+              
+        
+              
+              </ng-container>
+        
+             
+              <ng-template #noButtons>
+               
+              </ng-template>
+          
+        
+          
+        
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  

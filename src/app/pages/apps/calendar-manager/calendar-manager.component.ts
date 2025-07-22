@@ -8,7 +8,7 @@ import listPlugin from '@fullcalendar/list';
 import Swal from 'sweetalert2';
 import { ModalDirective } from 'ngx-bootstrap/modal';
 import { EntretienEventService } from 'src/app/core/services/entretien-event.service';
-
+import { UserProfileService } from 'src/app/core/services/user.service';
 export interface EntretienDTO {
   id: number;
   typeEntretien: string;
@@ -31,30 +31,36 @@ export interface ApplicationDTO {
   entretiens: EntretienDTO[];
 
 }
-
 @Component({
-  selector: 'app-calendar',
-  templateUrl: './calendar.component.html',
-  styleUrls: ['./calendar.component.scss']
+  selector: 'app-calendar-manager',
+  templateUrl: './calendar-manager.component.html',
+  styleUrl: './calendar-manager.component.scss'
 })
-export class CalendarComponent implements OnInit, AfterViewInit {
+export class CalendarManagerComponent {
   @ViewChild('eventModal', { static: false }) eventModal?: ModalDirective;
 
   calendarOptions!: CalendarOptions;
-  calendarEvents: any[] = [];
+  entretiensTech: any[] = [];
+
+  managerUserId:any;
+  selectedStatus: string = 'ALL';
+  calendarEvents: any[] = [];  
   formData!: UntypedFormGroup;
   isEditMode = false;
   submitted = false;
   applications: ApplicationDTO[] = [];
-  selectedStatus: string = 'ALL';
   entretiensAll: any[] = [];
   newEventDate: any;
    responsables: any[] = []; 
   selectedRoleType: any = 'RH';
   selectedResponsable: any = null;
+  showButtons: boolean = false; 
+  selectedEntretien: EntretienDTO | null = null;
+
   constructor(
+    private entretienService: EntretienEventService,
     private fb: UntypedFormBuilder,
-    private entretienService: EntretienEventService
+    private userProfile:UserProfileService,
   ) {}
 
   ngOnInit(): void {
@@ -67,60 +73,89 @@ export class CalendarComponent implements OnInit, AfterViewInit {
       end: ['', Validators.required],
       responsableId: ['', Validators.required]
     });
-   
-    this.loadEntretiens();
-  }
-
-  ngAfterViewInit(): void {
-    const draggableEl = document.getElementById('external-events');
-    if (draggableEl) {
-      new Draggable(draggableEl, {
-        itemSelector: '.draggable-application',
-        eventData: (el: HTMLElement) => {
-          const data = el.getAttribute('data-application');
-          return {
-            title: el.innerText,
-            extendedProps: {
-              applicationData: data
-            }
-          };
-        }
-      });
-    }
+    this.userProfile.getCurrentUser().subscribe(user => {
+      if (user && user.id != null) {
+     
+        this.managerUserId=user.id
+        this.loadEntretiens(); 
+      } else {
+        console.warn('Utilisateur invalide ou id non défini.');
+      }
+    });
   }
 
   loadEntretiens(): void {
     this.entretienService.getAllEntretiensWithApplications().subscribe(apps => {
-      const entretiens = [];
+      const entretiens: any[] = [];
+     
       for (const app of apps) {
         for (const entretien of app.entretiens || []) {
-          entretiens.push({
-            ...entretien,
-            applicationId: app.id,
-            candidatNom: app.userFullName,
-            photoUrl: app.userPhotoUrl,
-            statusEntretien: entretien.statusEntretien
-          });
+          if (entretien.typeEntretien === 'MANAGER' && entretien.idResponsable == this.managerUserId) {
+            entretiens.push({
+              ...entretien,
+              applicationId: app.id,
+              candidatNom: app.userFullName,
+              photoUrl: app.userPhotoUrl,
+              statusEntretien: entretien.statusEntretien
+            });
+          } 
         }
       }
+
+      
       this.entretiensAll = entretiens;
       this.applications = apps;
       this.filterEvents();
+      console.log('display the result about entretiensTech ',entretiens)
+      this.initCalendar();
     });
   }
-  loadResponsables(): void {
-    const selectedDate = this.formData.get('date')?.value; 
-    this.entretienService.getResponsablesDisponibles(selectedDate, this.selectedRoleType).subscribe(
-      (responsables: any[]) => {
-        this.responsables = responsables;
-        console.log('display list of responsable ',responsables)
+
+  initCalendar(): void {
+    this.calendarOptions = {
+      plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
+      initialView: 'dayGridMonth',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
       },
-      error => {
-        Swal.fire('Erreur', 'Impossible de charger les responsables', 'error');
-      }
-    );
+      editable: true,
+      droppable: true,
+      
+      eventClick: this.handleEventClick.bind(this),
+      events: this.calendarEvents,
+      eventContent: this.renderEventContent
+    };
   }
 
+  renderEventContent(arg: any): any {
+    const photoUrl = arg.event.extendedProps.photoUrl || 'assets/images/users/avatar-1.jpg';
+    const typeEntretien = arg.event.extendedProps.typeEntretien ;
+    const statusEntretien = arg.event.extendedProps.status ;
+    
+   
+    const icons = {
+      RH: '👥',
+      TECHNIQUE: '💻',
+      MANAGER: '📊',
+      
+    };
+  
+    const eventTypeIcon = icons[typeEntretien as keyof typeof icons] || '📅';
+  
+    const customHtml = `
+      <div class="d-flex flex-column align-items-start">
+        <div class="d-flex align-items-center mb-2">
+          <img src="${photoUrl}" class="rounded-circle me-2" width="30" height="30" alt="Photo" />
+          <span class="fw-bold">${eventTypeIcon} </span>
+        </div>
+       
+      </div>
+    `;
+  
+    return { html: customHtml };
+  }
   filterEvents(): void {
     const filtered = this.selectedStatus === 'ALL'
       ? this.entretiensAll
@@ -149,127 +184,19 @@ export class CalendarComponent implements OnInit, AfterViewInit {
   
     this.initCalendar();
   }
-  
-
-  initCalendar(): void {
-    this.calendarOptions = {
-      plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
-      initialView: 'dayGridMonth',
-      headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-      },
-      editable: true,
-      droppable: true,
-      eventReceive: this.handleDrop.bind(this),
-      eventClick: this.handleEventClick.bind(this),
-      events: this.calendarEvents,
-      eventContent: this.renderEventContent
-    };
-  }
-
-  renderEventContent(arg: any): any {
-    const photoUrl = arg.event.extendedProps.photoUrl || 'assets/images/users/avatar-1.jpg';
-    const typeEntretien = arg.event.extendedProps.typeEntretien ;
-    const statusEntretien = arg.event.extendedProps.status ;
-    
-   
-    const icons = {
-      RH: '👥',
-      TECHNIQUE: '💻',
-      MANAGER: '📊',
-      
-    };
-
-    const eventTypeIcon = icons[typeEntretien as keyof typeof icons] || '📅';
-  
-    const customHtml = `
-      <div class="d-flex flex-column align-items-start">
-        <div class="d-flex align-items-center mb-2">
-          <img src="${photoUrl}" class="rounded-circle me-2" width="30" height="30" alt="Photo" />
-          <span class="fw-bold">${eventTypeIcon} </span>
-        </div>
-       
-      </div>
-    `;
-  
-    return { html: customHtml };
-  }
-  
-
-  handleDrop(info: any): void {
-    const data = info.event.extendedProps?.applicationData;
-    if (!data) {
-      Swal.fire('Erreur', 'Aucune donnée trouvée', 'error');
-      return;
-    }
-  
-    const parsed = JSON.parse(data);
-    const applicationId = parsed.applicationId;
-    const app = this.applications.find(a => a.id === Number(applicationId));
-  
-    if (!app) {
-      Swal.fire('Erreur', 'Candidature introuvable', 'error');
-      return;
-    }
-  
-    if (app.statusApplication === 'REFUSE') {
-      Swal.fire('Erreur', 'Cette candidature est refusée.', 'error');
-      info.revert?.();
-      return;
-    }
-  
-    
-    const date = info.event.start;
-    const isoDate = date.getFullYear() + '-' +
-      String(date.getMonth() + 1).padStart(2, '0') + '-' +  
-      String(date.getDate()).padStart(2, '0');             
-  
-    const time = date.toTimeString().substring(0, 5); 
-  
-    const accepted = app.entretiens?.filter(e => e.statusEntretien === 'ACCEPTE').length || 0;
-    let typeEntretien = 'RH';
-    if (accepted === 1) 
-    {
-      typeEntretien = 'TECHNIQUE';
-      this.selectedRoleType='RECRUTEUR'
-    }
-    else if (accepted >= 2) {
-      typeEntretien = 'MANAGER';
-      this.selectedRoleType='MANAGER'
-    }
-  
-    this.formData.reset();
-    this.formData.patchValue({
-      applicationId,
-      type: typeEntretien,
-      date: isoDate,
-      start: time,
-      end: time
-    });
-    this.loadResponsables();
-    this.selectedResponsable = null; 
-  
-    this.isEditMode = false;
-    this.newEventDate = date;
-    this.submitted = false;
-  
-    this.eventModal?.show();
-  }
-  
-  
 
   handleEventClick(clickInfo: EventClickArg): void {
     this.isEditMode = true;
     const start = clickInfo.event.start!;
     const localDate = new Date(start);
-  
-   
+
     const entretienId = clickInfo.event.id;
     this.entretienService.getEntretienById(entretienId).subscribe(entretien => {
+      this.selectedEntretien = entretien; 
+
       this.selectedResponsable = entretien.responsable;
-  
+      this.showButtons = entretien.statusEntretien === 'PLANIFIE';
+
       this.formData.patchValue({
         applicationId: entretien.application.id,
         type: entretien.typeEntretien,
@@ -278,36 +205,17 @@ export class CalendarComponent implements OnInit, AfterViewInit {
         start: entretien.heureDebut.substring(0, 5),
         end: entretien.heureFin.substring(0, 5)
       });
-  
+
+      const type = entretien.typeEntretien?.toUpperCase();
+      if (type === 'RH') {
+        this.selectedRoleType = 'RH';
+      } else if (type === 'MANAGER') {
+        this.selectedRoleType = 'MANAGER';
+      } else {
+        this.selectedRoleType = 'RECRUTEUR';
+      }
+
       this.eventModal?.show();
-    });
-  }
-  
-  
-
-  saveEvent(): void {
-    this.submitted = true;
-    if (this.formData.invalid) return;
-
-    const fd = this.formData.getRawValue();
-    const dt = new Date(fd.date);
-    const [h, m] = fd.start.split(':').map(Number);
-    dt.setHours(h, m);
-
-    this.entretienService.planifierEntretien(
-      fd.applicationId,
-      fd.type,
-      dt,
-      fd.location,
-      fd.start,
-      fd.end,
-      fd.responsableId 
-    ).subscribe(() => {
-      Swal.fire('Succès', 'Entretien planifié', 'success');
-      this.eventModal?.hide();
-      this.loadEntretiens();
-    }, () => {
-      Swal.fire('Erreur', 'Échec de planification', 'error');
     });
   }
 
@@ -359,10 +267,45 @@ export class CalendarComponent implements OnInit, AfterViewInit {
     return app?.userFullName || '';
   }
 
-  deleteEvent(): void {
-    if (confirm('Voulez-vous vraiment supprimer cet entretien ?')) {
-      this.eventModal?.hide();
-      this.initCalendar();
-    }
+  accepterEntretien(): void {
+    const entretienId = this.getCurrentEntretienId();
+    if (!entretienId) return;
+  
+    this.entretienService.traiterEntretien(entretienId, true).subscribe({
+      next: () => {
+        Swal.fire('Succès', 'Entretien accepté', 'success');
+        this.eventModal?.hide();
+        this.loadEntretiens();
+      },
+      error: () => {
+        Swal.fire('Erreur', 'Impossible d’accepter l’entretien', 'error');
+      }
+    });
+  }
+  
+  refuserEntretien(): void {
+    const entretienId = this.getCurrentEntretienId();
+    if (!entretienId) return;
+  
+    this.entretienService.traiterEntretien(entretienId, false).subscribe({
+      next: () => {
+        Swal.fire('Succès', 'Entretien refusé', 'success');
+        this.eventModal?.hide();
+        this.loadEntretiens();
+      },
+      error: () => {
+        Swal.fire('Erreur', 'Impossible de refuser l’entretien', 'error');
+      }
+    });
+  }
+  
+  private getCurrentEntretienId(): number | null {
+    const rawValue = this.formData?.get('applicationId')?.value;
+    const appId = rawValue !== null ? Number(rawValue) : null;
+  
+    if (appId === null || isNaN(appId)) return null;
+  
+    const entretien = this.entretiensAll.find(e => e.applicationId === appId);
+    return entretien?.id ?? null;
   }
 }

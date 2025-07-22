@@ -1,0 +1,29 @@
+<div class="container mt-4">
+    <h4>Mes Entretiens</h4>
+    <full-calendar [options]="calendarOptions"></full-calendar>
+  </div>
+  
+  <!-- Modal Consultation -->
+  <div class="modal fade" bsModal #eventModal="bs-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ selectedEntretien?.title }}</h5>
+          <button type="button" class="btn-close" (click)="eventModal.hide()"></button>
+        </div>
+        <div class="modal-body">
+          <p><strong>Date :</strong> {{ selectedEntretien?.date | date }}</p>
+          <p><strong>Heure début :</strong> {{ selectedEntretien?.start | date:'shortTime' }}</p>
+          <p><strong>Heure fin :</strong> {{ selectedEntretien?.end | date:'shortTime' }}</p>
+          <p><strong>Type :</strong> {{ selectedEntretien?.typeEntretien }}</p>
+          <p><strong>Statut :</strong> {{ selectedEntretien?.statusEntretien }}</p>
+          <p><strong>Lieu :</strong> {{ selectedEntretien?.location }}</p>
+          <p><strong>Responsable :</strong> {{ selectedEntretien?.responsable?.email }}</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="eventModal.hide()">Fermer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
